@@ -1,73 +1,120 @@
 from tkinter import *
 import tkinter.font
-from gpiozero import LED, Buzzer
+from gpiozero import LED
 import RPi.GPIO
-RPi.GPIO.setmode(RPi.GPIO.BCM)
 import time
 
-## Hardware Declaration
-buzzer = Buzzer(14)
-ledRed = LED(15)
-ledGreen = LED(18)
-ledBlue = LED(23)
+# Mode of Raspberry Pi
+RPi.GPIO.setmode(RPi.GPIO.BCM)
 
+# LED Pin Declaration
+ledRed = LED(20)
+ledGreen = LED(12)
+ledBlue = LED(21)
 
-##GUI DEFINITIONS ##
-win = Tk()
-win.title("My Application")
-myFont = tkinter.font.Font(family = 'Helvetica', size = 12, weight = "bold")
+# Padding Variables
+px = 30
+py = 30
 
-## Event functions
-def ledRedToggle():
-    if ledRed.is_lit:
-        ledRed.off()
-        ledRedButton.deselect()
+# LED control
+def led_control(led, state):
+    if state:
+        led.on()
+        # Turn off other LEDs
+        [other_led.off() for other_led in (ledRed, ledGreen, ledBlue) if other_led != led]
     else:
-        ledRed.on()
-        RPi.GPIO.output(14, RPi.GPIO.HIGH)
-        time.sleep(0.5)
-        RPi.GPIO.output(14, RPi.GPIO.LOW)
-        ledRedButton.select()
+        led.off()
+
+# Event functions
+def ledRedToggle():
+    led_control(ledRed, not ledRed.is_lit)
 
 def ledGreenToggle():
-    if ledGreen.is_lit:
-        ledGreen.off()
-        ledGreenButton.deselect()
-    else:
-        ledGreen.on()
-        RPi.GPIO.output(14, RPi.GPIO.HIGH)
-        time.sleep(0.5)
-        RPi.GPIO.output(14, RPi.GPIO.LOW)
-        ledGreenButton.select()
-    
+    led_control(ledGreen, not ledGreen.is_lit)
+
 def ledBlueToggle():
-    if ledBlue.is_lit:
-        ledBlue.off()
-        ledBlueButton.deselect()
-    else:
-        ledBlue.on()
-        RPi.GPIO.output(14, RPi.GPIO.HIGH)
-        time.sleep(0.5)
-        RPi.GPIO.output(14, RPi.GPIO.LOW)
-        ledBlueButton.select()
+    led_control(ledBlue, not ledBlue.is_lit)
 
 def close():
     RPi.GPIO.cleanup()
     win.destroy()
-   
-## WIDGETS
+
+# GUI definitions
+win = Tk()
+win.title("My Application")
+
+# Set Style
+myFont = tkinter.font.Font(family = 'Arial', size = 12, weight = "bold")
+
+# Create a label widget
+label = Label(win, text="Three LEDs Task")
+
+# Grid the label widget
+label.grid(row=0, column=1, padx = px, pady = py)
+
+# Widgets
 color = IntVar()
-ledRedButton = Radiobutton(win, text = "Red", variable = "color", value = 1, font = myFont, command = ledRedToggle, bg = 'bisque2',height = 1, width = 24)
-ledGreenButton = Radiobutton(win, text = "Green", variable = "color", value = 2, font = myFont, command = ledGreenToggle, bg = 'bisque2',height = 1, width = 24)
-ledBlueButton = Radiobutton(win, text = "Blue", variable = "color", value = 3, font = myFont, command = ledBlueToggle, bg = 'bisque2',height = 1, width = 24)
 
+# Create an array of arguments for the Radiobutton widget
+radiobutton_args = [
+    {
+        "text": "Green",
+        "variable": color,
+        "value": 2,
+        "font": myFont,
+        "command": ledGreenToggle,
+        "bg": "white",
+        "height": 1,
+        "width": 20
+    },
+    {
+        "text": "Red",
+        "variable": color,
+        "value": 1,
+        "font": myFont,
+        "command": ledRedToggle,
+        "bg": "white",
+        "height": 1,
+        "width": 20
+    },
+    {
+        "text": "Blue",
+        "variable": color,
+        "value": 3,
+        "font": myFont,
+        "command": ledBlueToggle,
+        "bg": "white",
+        "height": 1,
+        "width": 20
+    }
+]
 
-exitButton = Button(win, text = "Exit", font = myFont, command = close, bg = 'red', height = 1, width = 6)
-exitButton.grid(row = 3, column = 1)
+# Create the Radiobutton widgets
+row = 1
+for args in radiobutton_args:
+    Radiobutton(win, **args).grid(row=row, column=1)
+    row+=1
 
-ledRedButton.grid(row = 0, column = 1)
-ledGreenButton.grid(row = 1, column = 1)
-ledBlueButton.grid(row = 2, column = 1)
+# Create an array of arguments for the exit button
+exit_button_args = [
+    {
+        "text": "Exit",
+        "font": myFont,
+        "command": close,
+        "bg": "red",
+        "height": 1,
+        "width": 20,
+    }
+]
+
+# Create the exit button
+exitButton = Button(win, **exit_button_args[0])
+exitButton.grid(row = 4, column = 1, padx=px, pady=py)
+
+# Style the exit button
+exitButton.config(foreground="white", borderwidth=2, relief="raised")
 
 win.protocol('WM_DELETE_WINDOW', close)
 win.mainloop() # loop forever
+
+
